@@ -7,7 +7,7 @@ This repository contains implementations of various Graph Neural Network (GNN) a
 ## Overview
 
 The repository is structured into four main directories:
-- `Graph Transformer Networks`: Implementation of the Graph Transformer Networks with enhancements for handling heterogeneous graphs.
+- `Graph Transformer Networks`: Implementation of the Graph Transformer Networks with enhancements for handling heterogeneous graphs using positional encoding.
 - `pyHGT`: The Heterogeneous Graph Transformer (HGT) architecture implemented with positional encoding.
 - `RGAT`: Relational Graph Attention Networks with support for positional encoding to improve the attention mechanism across different node and relation types.
 - `SAN`: Source implementation of Spectral Attention Networks used as a reference for positional encoding methods.
@@ -16,7 +16,7 @@ The repository is structured into four main directories:
 
 - **Positional Encoding**: Enhancements using the SAN paper's method are applied to Graph Transformer Networks, pyHGT, and RGAT to improve their efficacy on heterogeneous graphs.
 - **Heterogeneous Graphs**: Specialized attention mechanisms to handle different types of nodes and edges effectively.
-- **Multiple Datasets**: Supports various datasets including ACM, DBLP, and IMDB, ideal for tasks like node classification and link prediction.
+- **Multiple Datasets**: Supports various datasets including ACM, IMDB, Tox21, and AIFB, ideal for tasks like node classification and link prediction.
 
 ## Getting Started
 
@@ -44,16 +44,12 @@ pip install -r requirements.txt
 Each project has specific scripts to train and evaluate the models. For example, to run the Graph Transformer Network on the ACM dataset:
 
 ```bash
-cd Graph Transformer Networks
+cd Graph_Transformer_Networks
 python main.py --dataset ACM --model GTN --num_layers 1 --epoch 50 --lr 0.02 --num_channels 2
 ```
-
-### Poster
-
-For a detailed explanation of the project, enhancements, and benchmarks, refer to the poster titled "Graph Attention for Heterogeneous Graphs with Positional Encoding" available in this repository under poster/.
 
 ### Citation
 If you use the enhancements or the positional encoding techniques in your research, please consider citing the relevant papers listed in each project's README.md.
 
 ### License
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License.

@@ -71,7 +71,7 @@ class GTN(nn.Module):
         for i in range(self.num_channels):
             edge_index, edge_weight = H[i][0], H[i][1]
             if i==0:                
-                X_ = self.gcn(X,edge_index=edge_index.detach(), edge_weight=edge_weight)
+                X_ = self.gcn(X,edge_index=edge_index.detach(), edge_weight=edge_weight, g=A)
                 X_ = F.relu(X_)
             else:
                 X_tmp = F.relu(self.gcn(X,edge_index=edge_index.detach(), edge_weight=edge_weight))

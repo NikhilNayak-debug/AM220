@@ -1,9 +1,14 @@
 import torch
+import torch.nn as nn
 from torch.nn import Parameter
 from torch_scatter import scatter_add
 from torch_geometric.nn.conv.message_passing import MessagePassing
 from torch_geometric.utils import add_self_loops
 from inits import glorot, zeros
+import dgl
+from scipy import sparse as sp
+import numpy as np
+import torch.nn.functional as F
 
 class GCNConv(MessagePassing):
     r"""The graph convolutional operator from the `"Semi-supervised
@@ -41,11 +46,14 @@ class GCNConv(MessagePassing):
                  args=None):
         super(GCNConv, self).__init__('add', flow='target_to_source')
 
-        self.in_channels = in_channels
+        self.in_channels = in_channels + 16
         self.out_channels = out_channels
         self.improved = improved
         self.cached = cached
         self.cached_result = None
+
+        encoder_layer = nn.TransformerEncoderLayer(d_model=16, nhead=4)
+        self.PE_Transformer = nn.TransformerEncoder(encoder_layer, num_layers=1)
 
         self.weight = Parameter(torch.Tensor(in_channels, out_channels))
 
@@ -61,6 +69,42 @@ class GCNConv(MessagePassing):
         glorot(self.weight)
         zeros(self.bias)
         self.cached_result = None
+
+    def laplace_decomp(self, g, max_freqs=10):
+
+        # Laplacian
+        n = g.number_of_nodes()
+        A = g.adjacency_matrix_scipy(return_edge_ids=False).astype(float)
+        N = sp.diags(dgl.backend.asnumpy(g.in_degrees()).clip(1) ** -0.5, dtype=float)
+        L = sp.eye(g.number_of_nodes()) - N * A * N
+
+        # Eigenvectors with numpy
+        EigVals, EigVecs = np.linalg.eigh(L.toarray())
+        EigVals, EigVecs = EigVals[: max_freqs], EigVecs[:,
+                                                 :max_freqs]  # Keep up to the maximum desired number of frequencies
+
+        # Normalize and pad EigenVectors
+        EigVecs = torch.from_numpy(EigVecs).float()
+        EigVecs = F.normalize(EigVecs, p=2, dim=1, eps=1e-12, out=None)
+
+        if n < max_freqs:
+            g.ndata['EigVecs'] = F.pad(EigVecs, (0, max_freqs - n), value=float('nan'))
+        else:
+            g.ndata['EigVecs'] = EigVecs
+
+        # Save eigenvales and pad
+        EigVals = torch.from_numpy(np.sort(np.abs(np.real(
+            EigVals))))  # Abs value is taken because numpy sometimes computes the first eigenvalue approaching 0 from the negative
+
+        if n < max_freqs:
+            EigVals = F.pad(EigVals, (0, max_freqs - n), value=float('nan')).unsqueeze(0)
+        else:
+            EigVals = EigVals.unsqueeze(0)
+
+        # Save EigVals node features
+        g.ndata['EigVals'] = EigVals.repeat(g.number_of_nodes(), 1).unsqueeze(2)
+
+        return EigVecs, EigVals
 
 
     @staticmethod
@@ -91,8 +135,30 @@ class GCNConv(MessagePassing):
         return edge_index, deg_inv_sqrt[row] * edge_weight
 
 
-    def forward(self, x, edge_index, edge_weight=None):
+    def forward(self, x, edge_index, edge_weight=None, g=None):
         """"""
+
+        EigVecs, EigVals = self.laplace_decomp(g[0])
+
+        PosEnc = torch.cat((EigVecs.unsqueeze(2), EigVals), dim=2).float()  # (Num nodes) x (Num Eigenvectors) x 2
+        empty_mask = torch.isnan(PosEnc)  # (Num nodes) x (Num Eigenvectors) x 2
+
+        PosEnc[empty_mask] = 0  # (Num nodes) x (Num Eigenvectors) x 2
+        PosEnc = torch.transpose(PosEnc, 0, 1).float()  # (Num Eigenvectors) x (Num nodes) x 2
+        PosEnc = self.linear_A(PosEnc)  # (Num Eigenvectors) x (Num nodes) x PE_dim
+
+        # 1st Transformer: Learned PE
+        PosEnc = self.PE_Transformer(src=PosEnc, src_key_padding_mask=empty_mask[:, :, 0])
+
+        # remove masked sequences
+        PosEnc[torch.transpose(empty_mask, 0, 1)[:, :, 0]] = float('nan')
+
+        # Sum pooling
+        PosEnc = torch.nansum(PosEnc, 0, keepdim=False)
+
+        # Concatenate learned PE to input embedding
+        x = torch.cat((x, PosEnc), 1)
+
         x = torch.matmul(x, self.weight)
 
         if not self.cached or self.cached_result is None:

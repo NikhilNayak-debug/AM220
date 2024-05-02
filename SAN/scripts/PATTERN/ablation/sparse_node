@@ -1,0 +1,8 @@
+#!/bin/bash
+
+cd ~/SAN/
+
+python  main_SBMs_node_classification.py --dataset SBM_PATTERN --seed 41 --config 'configs/PATTERN/ablation/sparse/node'
+python  main_SBMs_node_classification.py --dataset SBM_PATTERN --seed 55 --config 'configs/PATTERN/ablation/sparse/node'
+python  main_SBMs_node_classification.py --dataset SBM_PATTERN --seed 13 --config 'configs/PATTERN/ablation/sparse/node'
+python  main_SBMs_node_classification.py --dataset SBM_PATTERN --seed 88 --config 'configs/PATTERN/ablation/sparse/node'

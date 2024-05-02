@@ -1,0 +1,8 @@
+#!/bin/bash
+
+cd ~/SAN/
+
+python  main_SBMs_node_classification.py --dataset SBM_CLUSTER --seed 41 --config 'configs/CLUSTER/ablation/full/none'
+python  main_SBMs_node_classification.py --dataset SBM_CLUSTER --seed 55 --config 'configs/CLUSTER/ablation/full/none'
+python  main_SBMs_node_classification.py --dataset SBM_CLUSTER --seed 13 --config 'configs/CLUSTER/ablation/full/none'
+python  main_SBMs_node_classification.py --dataset SBM_CLUSTER --seed 88 --config 'configs/CLUSTER/ablation/full/none'

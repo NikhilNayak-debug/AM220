@@ -1,0 +1,11 @@
+#!/bin/bash
+
+cd ~/SAN/
+
+python  main_SBMs_node_classification.py --dataset SBM_PATTERN --seed 41 --config 'configs/PATTERN/ablation/full/1e-4/node'
+python  main_SBMs_node_classification.py --dataset SBM_PATTERN --seed 55 --config 'configs/PATTERN/ablation/full/1e-4/node'
+python  main_SBMs_node_classification.py --dataset SBM_PATTERN --seed 13 --config 'configs/PATTERN/ablation/full/1e-4/node'
+python  main_SBMs_node_classification.py --dataset SBM_PATTERN --seed 88 --config 'configs/PATTERN/ablation/full/1e-4/node'
+
+
+

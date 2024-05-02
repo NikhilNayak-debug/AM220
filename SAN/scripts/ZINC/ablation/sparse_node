@@ -1,0 +1,8 @@
+#!/bin/bash
+
+cd ~/SAN/
+
+python  main_ZINC_graph_regression.py --seed 41 --config 'configs/ZINC/ablation/sparse/node'
+python  main_ZINC_graph_regression.py --seed 55 --config 'configs/ZINC/ablation/sparse/node'
+python  main_ZINC_graph_regression.py --seed 13 --config 'configs/ZINC/ablation/sparse/node'
+python  main_ZINC_graph_regression.py --seed 88 --config 'configs/ZINC/ablation/sparse/node'
